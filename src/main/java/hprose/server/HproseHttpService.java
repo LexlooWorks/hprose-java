@@ -188,12 +188,12 @@ public class HproseHttpService extends HproseService {
             }
         }
         else if (method.equals("POST")) {
-            if (httpContext.getRequest().isAsyncSupported()) {
-                asyncHandle(httpContext, methods);
-            }
-            else {
+//            if (httpContext.getRequest().isAsyncSupported()) {
+//                asyncHandle(httpContext, methods);
+//            }
+//            else {
                 syncHandle(httpContext, methods);
-            }
+//            }
         }
     }
 
