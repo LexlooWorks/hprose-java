@@ -23,13 +23,12 @@ import hprose.common.HproseMethods;
 import hprose.io.ByteBufferStream;
 import hprose.util.concurrent.Action;
 import hprose.util.concurrent.Promise;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
-import javax.servlet.AsyncContext;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
+
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -197,85 +196,85 @@ public class HproseHttpService extends HproseService {
         }
     }
 
-    private void asyncHandle(final HttpContext httpContext, final HproseHttpMethods methods) {
-        final AsyncContext async = httpContext.getRequest().startAsync();
-        async.setTimeout(getTimeout());
-        async.addListener(new AsyncListener() {
-            public void onComplete(AsyncEvent ae) throws IOException {
-            }
-            public void onTimeout(AsyncEvent ae) throws IOException {
-                ((HttpServletResponse)ae.getSuppliedResponse()).sendError(HttpServletResponse.SC_REQUEST_TIMEOUT);
-            }
-            public void onError(AsyncEvent ae) throws IOException {
-            }
-            public void onStartAsync(AsyncEvent ae) throws IOException {
-            }
-        });
-        async.start(new Runnable() {
-            public void run() {
-                ByteBufferStream istream = null;
-                Object response;
-                try {
-                    currentContext.set(httpContext);
-                    istream = new ByteBufferStream();
-                    istream.readFrom(async.getRequest().getInputStream());
-                    response = handle(istream.buffer, methods, httpContext);
-                }
-                catch (Throwable e) {
-                    currentContext.remove();
-                    fireErrorEvent(e, httpContext);
-                    async.complete();
-                    return;
-                }
-                finally {
-                    if (istream != null) {
-                        istream.close();
-                    }
-                }
-                if (response instanceof Promise) {
-                    ((Promise<ByteBuffer>)response).then(new Action<ByteBuffer>() {
-                        public void call(ByteBuffer value) throws Throwable {
-                            try {
-                                ByteBufferStream ostream = new ByteBufferStream(value);
-                                async.getResponse().setContentLength(ostream.available());
-                                ostream.writeTo(async.getResponse().getOutputStream());
-                            }
-                            finally {
-                                ByteBufferStream.free(value);
-                            }
-                        }
-                    }, new Action<Throwable>() {
-                        public void call(Throwable e) throws Throwable {
-                            fireErrorEvent(e, httpContext);
-                        }
-                    }).complete(new Action<Object>() {
-                        public void call(Object o) throws Throwable {
-                            currentContext.remove();
-                            async.complete();
-                        }
-                    });
-                }
-                else {
-                    ByteBufferStream ostream = null;
-                    try {
-                        ostream = new ByteBufferStream((ByteBuffer)response);
-                        async.getResponse().setContentLength(ostream.available());
-                        ostream.writeTo(async.getResponse().getOutputStream());
-                    }
-                    catch (Throwable e) {
-                        fireErrorEvent(e, httpContext);
-                    }
-                    finally {
-                        currentContext.remove();
-                        if (ostream != null) {
-                            ostream.close();
-                        }
-                        async.complete();
-                    }
-                }
-            }
-        });
-    }
+//    private void asyncHandle(final HttpContext httpContext, final HproseHttpMethods methods) {
+//        final AsyncContext async = httpContext.getRequest().startAsync();
+//        async.setTimeout(getTimeout());
+//        async.addListener(new AsyncListener() {
+//            public void onComplete(AsyncEvent ae) throws IOException {
+//            }
+//            public void onTimeout(AsyncEvent ae) throws IOException {
+//                ((HttpServletResponse)ae.getSuppliedResponse()).sendError(HttpServletResponse.SC_REQUEST_TIMEOUT);
+//            }
+//            public void onError(AsyncEvent ae) throws IOException {
+//            }
+//            public void onStartAsync(AsyncEvent ae) throws IOException {
+//            }
+//        });
+//        async.start(new Runnable() {
+//            public void run() {
+//                ByteBufferStream istream = null;
+//                Object response;
+//                try {
+//                    currentContext.set(httpContext);
+//                    istream = new ByteBufferStream();
+//                    istream.readFrom(async.getRequest().getInputStream());
+//                    response = handle(istream.buffer, methods, httpContext);
+//                }
+//                catch (Throwable e) {
+//                    currentContext.remove();
+//                    fireErrorEvent(e, httpContext);
+//                    async.complete();
+//                    return;
+//                }
+//                finally {
+//                    if (istream != null) {
+//                        istream.close();
+//                    }
+//                }
+//                if (response instanceof Promise) {
+//                    ((Promise<ByteBuffer>)response).then(new Action<ByteBuffer>() {
+//                        public void call(ByteBuffer value) throws Throwable {
+//                            try {
+//                                ByteBufferStream ostream = new ByteBufferStream(value);
+//                                async.getResponse().setContentLength(ostream.available());
+//                                ostream.writeTo(async.getResponse().getOutputStream());
+//                            }
+//                            finally {
+//                                ByteBufferStream.free(value);
+//                            }
+//                        }
+//                    }, new Action<Throwable>() {
+//                        public void call(Throwable e) throws Throwable {
+//                            fireErrorEvent(e, httpContext);
+//                        }
+//                    }).complete(new Action<Object>() {
+//                        public void call(Object o) throws Throwable {
+//                            currentContext.remove();
+//                            async.complete();
+//                        }
+//                    });
+//                }
+//                else {
+//                    ByteBufferStream ostream = null;
+//                    try {
+//                        ostream = new ByteBufferStream((ByteBuffer)response);
+//                        async.getResponse().setContentLength(ostream.available());
+//                        ostream.writeTo(async.getResponse().getOutputStream());
+//                    }
+//                    catch (Throwable e) {
+//                        fireErrorEvent(e, httpContext);
+//                    }
+//                    finally {
+//                        currentContext.remove();
+//                        if (ostream != null) {
+//                            ostream.close();
+//                        }
+//                        async.complete();
+//                    }
+//                }
+//            }
+//        });
+//    }
 
     private void syncHandle(final HttpContext httpContext, HproseHttpMethods methods) {
         ByteBufferStream istream = null;
